@@ -3,9 +3,13 @@ const path = require('path');
 const exphbs = require('express-handlebars');
 const methodOverride = require('method-override');
 const session = require('express-session');
+const flash = require('connect-flash');
+const passport = require('passport');
+
 // --- Init
 const app = express();
-const database = require('./database');
+require('./database');
+require('./config/passport');
 
 // --- Settings
 app.set('port', process.env.PORT || 3000);
@@ -29,9 +33,18 @@ app.use(session({
 	resave: true,
 	saveUninitialized: true
 }));
-app.use(express.json());
+app.use(passport.initialize());
+app.use(passport.session());
+app.use(flash());
 
 // --- Global variables
+app.use((request, response, next) => {
+	response.locals.successMessage = request.flash('successMessage');
+	response.locals.errorMessage = request.flash('errorMessage');
+	response.locals.error = request.flash('error');
+	response.locals.user = request.user || null;
+	next();
+});
 
 // --- Routes
 app.use(require('./routes/index'));
